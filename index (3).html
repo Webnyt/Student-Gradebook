@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gradebook</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; color: #1f2d3d; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #c9d3de; padding: 8px 10px; text-align: left; }
+    th { background: #1f4e79; color: #fff; }
+    tr.top td { background: #e6f4ea; font-weight: 600; }
+    tfoot td { background: #eef3f8; font-weight: 600; }
+    form { margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 8px; }
+    input { padding: 6px; width: 90px; }
+    input[name="student"] { width: 130px; }
+    button { padding: 6px 14px; }
+  </style>
+</head>
+<body>
+  <h1>Gradebook</h1>
+  <table id="grades">
+    <thead></thead>
+    <tbody></tbody>
+    <tfoot></tfoot>
+  </table>
+  <p id="summary"></p>
+
+  <form id="add">
+    <input name="student" placeholder="Name" required>
+    <input name="s0" type="number" min="0" max="100" placeholder="Math" required>
+    <input name="s1" type="number" min="0" max="100" placeholder="Science" required>
+    <input name="s2" type="number" min="0" max="100" placeholder="English" required>
+    <button type="submit">Add student</button>
+  </form>
+
+  <script>
+    const subjects = ["Math", "Science", "English"];
+
+    const students = [
+      ["Ama", 78, 85, 92],
+      ["Kofi", 90, 72, 65],
+      ["Esi", 88, 94, 81],
+      ["Yaw", 55, 60, 70],
+    ];
+
+    function average(numbers) {
+      let total = 0;
+      for (const n of numbers) {
+        total += n;
+      }
+      return total / numbers.length;
+    }
+
+    function cell(tag, text) {
+      const el = document.createElement(tag);
+      el.textContent = text;
+      return el;
+    }
+
+    function render() {
+      const head = document.querySelector("#grades thead");
+      const body = document.querySelector("#grades tbody");
+      const foot = document.querySelector("#grades tfoot");
+      head.replaceChildren();
+      body.replaceChildren();
+      foot.replaceChildren();
+
+      const headRow = document.createElement("tr");
+      ["Student", ...subjects, "Average"].forEach((title) => headRow.append(cell("th", title)));
+      head.append(headRow);
+
+      let best = students[0];
+      for (const row of students) {
+        if (average(row.slice(1)) > average(best.slice(1))) {
+          best = row;
+        }
+      }
+
+      for (const row of students) {
+        const tr = document.createElement("tr");
+        if (row === best) {
+          tr.className = "top";
+        }
+        row.forEach((value) => tr.append(cell("td", value)));
+        tr.append(cell("td", average(row.slice(1)).toFixed(1)));
+        body.append(tr);
+      }
+
+      const footRow = document.createElement("tr");
+      footRow.append(cell("td", "Subject average"));
+      subjects.forEach((_, i) => {
+        const column = students.map((row) => row[i + 1]);
+        footRow.append(cell("td", average(column).toFixed(1)));
+      });
+      footRow.append(cell("td", ""));
+      foot.append(footRow);
+
+      const passing = students.filter((row) => average(row.slice(1)) >= 60);
+      document.getElementById("summary").textContent =
+        `Top student: ${best[0]}. Passing: ${passing.map((row) => row[0]).join(", ")}.`;
+    }
+
+    document.getElementById("add").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const form = event.target;
+      const name = form.elements["student"].value.trim();
+      const scores = subjects.map((_, i) => Number(form.elements[`s${i}`].value));
+      students.push([name, ...scores]);
+      form.reset();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
